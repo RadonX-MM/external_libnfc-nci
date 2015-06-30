@@ -12,6 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# function to find all *.cpp files under a directory
+define all-cpp-files-under
+$(patsubst ./%,%, \
+  $(shell cd $(LOCAL_PATH) ; \
+          find $(1) -name "*.cpp" -and -not -name ".*") \
+ )
+endef
+
+ifneq ($(BOARD_NFC_HAL_SUFFIX),)
+    HAL_SUFFIX := pn54x.$(BOARD_NFC_HAL_SUFFIX)
+else
+    HAL_SUFFIX := pn54x.default
+endif
+
+ifeq ($(BOARD_NFC_DEVICE),)
+    NFC_DEVICE := "/dev/pn544"
+else
+    NFC_DEVICE := $(BOARD_NFC_DEVICE)
+endif
+
+LOCAL_PRELINK_MODULE := false
+LOCAL_ARM_MODE := arm
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := nfc_nci.$(TARGET_DEVICE)
@@ -43,9 +65,15 @@ endif
 #### Select the CHIP ####
 LOCAL_CFLAGS += -DNFC_NXP_CHIP_TYPE=PN548C2
 
+ifeq ($(BOARD_NFC_CHIPSET),pn547)
+    LOCAL_CFLAGS += -DNFC_NXP_CHIP_TYPE=PN547C2
+endif
+
 LOCAL_CFLAGS += -DANDROID \
         -DNXP_UICC_ENABLE -DNXP_HW_SELF_TEST
 LOCAL_CFLAGS += -DNFC_NXP_HFO_SETTINGS=FALSE
 #LOCAL_CFLAGS += -DFELICA_CLT_ENABLE
+
+LOCAL_CFLAGS += -DNXP_NFC_DEVICE="\"$(NFC_DEVICE)\""
 
 include $(BUILD_SHARED_LIBRARY)
